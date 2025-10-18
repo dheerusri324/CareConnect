@@ -1,0 +1,26 @@
+{
+  "name": "careconnect",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "dev": "concurrently \"npm start --prefix frontend\" \"cross-env FLASK_APP=backend/app.py .venv\\Scripts\\flask run\""
+   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dheerusri324/CareConnect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dheerusri324/CareConnect/issues"
+  },
+  "homepage": "https://github.com/dheerusri324/CareConnect#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0"
+  }
+}

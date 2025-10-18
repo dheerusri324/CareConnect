@@ -1,0 +1,8 @@
+# .gitignore
+
+# Python
+.venv/
+__pycache__/
+
+# Environment file
+backend/.env
