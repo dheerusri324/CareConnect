@@ -3,6 +3,7 @@
 from flask import Blueprint, jsonify
 from models import db, Appointment, Doctor
 from .auth_routes import token_required
+from datetime import date
 
 doctor_bp = Blueprint('doctor_bp', __name__)
 
@@ -17,7 +18,10 @@ def get_doctor_appointments(current_user):
     if not doctor:
         return jsonify({'message': 'Doctor profile not found'}), 404
 
-    appointments = Appointment.query.filter_by(doctor_id=doctor.id).all()
+    appointments = Appointment.query.filter_by(doctor_id=doctor.id)\
+        .filter(Appointment.appointment_date >= date.today())\
+        .order_by(Appointment.appointment_date, Appointment.appointment_time)\
+        .all()
     output = []
     for appt in appointments:
         appt_data = {

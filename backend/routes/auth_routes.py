@@ -1,7 +1,7 @@
 # backend/routes/auth_routes.py
 
 from flask import Blueprint, request, jsonify
-from models import db, User
+from models import db, User, Doctor
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps

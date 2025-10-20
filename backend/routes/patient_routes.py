@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, Doctor, Appointment
 from .auth_routes import token_required
+from datetime import datetime, timedelta
 
 patient_bp = Blueprint('patient_bp', __name__)
 
@@ -57,3 +58,46 @@ def get_my_appointments(current_user):
         }
         output.append(appt_data)
     return jsonify({'appointments': output})
+
+@patient_bp.route('/doctors/<int:doctor_id>/available-slots', methods=['GET'])
+@token_required
+def get_available_slots(current_user, doctor_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({"message": "Date parameter is required"}), 400
+    
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({"message": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    booked_appointments = Appointment.query.filter_by(
+        doctor_id=doctor_id,
+        appointment_date=selected_date
+    ).all()
+    booked_times = {appt.appointment_time for appt in booked_appointments}
+
+    start_time = datetime.strptime("09:00", "%H:%M").time()
+    end_time = datetime.strptime("17:00", "%H:%M").time()
+    slot_duration = timedelta(minutes=15)
+    
+    all_slots = []
+    current_slot_time = datetime.combine(selected_date, start_time)
+    end_datetime = datetime.combine(selected_date, end_time)
+    
+    # Get the current time to compare against
+    now = datetime.now()
+
+    while current_slot_time < end_datetime:
+        time_str = current_slot_time.strftime("%H:%M")
+        
+        # A slot is considered "booked" if it's already in the DB OR if the date is today and the time is in the past.
+        is_past = selected_date == now.date() and current_slot_time.time() < now.time()
+        
+        all_slots.append({
+            "time": time_str,
+            "booked": time_str in booked_times or is_past
+        })
+        current_slot_time += slot_duration
+
+    return jsonify(all_slots)
