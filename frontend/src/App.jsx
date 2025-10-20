@@ -4,6 +4,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
+import DoctorRegister from './components/DoctorRegister';
 import DoctorList from './components/DoctorList';
 import MyAppointments from './components/MyAppointments';
 import DoctorDashboard from './components/DoctorDashboard';

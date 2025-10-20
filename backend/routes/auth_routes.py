@@ -60,3 +60,33 @@ def login():
     }, SECRET_KEY, "HS256")
 
     return jsonify({'token': token, 'role': user.role, 'username': user.username})
+
+@auth_bp.route('/register-doctor', methods=['POST'])
+def register_doctor():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    doctor_name = data.get('name')
+    specialization = data.get('specialization')
+
+    if not all([username, password, doctor_name, specialization]):
+        return jsonify({'message': 'All fields are required'}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({'message': 'Username already exists'}), 409
+
+    # Step 1: Create the user account with the 'doctor' role
+    new_user = User(username=username, role='doctor')
+    new_user.set_password(password)
+    db.session.add(new_user)
+    db.session.flush()  # Use flush to get the new_user.id before committing
+
+    # Step 2: Create the doctor profile and link it to the user account
+    new_doctor = Doctor(
+        name=doctor_name,
+        specialization=specialization,
+        user_id=new_user.id
+    )
+    db.session.add(new_doctor)
+    db.session.commit() # Commit both the new user and new doctor
+
+    return jsonify({'message': 'Doctor registered successfully'}), 201
