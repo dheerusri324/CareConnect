@@ -1,22 +1,28 @@
 // frontend/src/components/DoctorList.jsx
 
-import React, { useState, useEffect } from 'react';
-import api from '../api';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SplitText from "@/components/ui/SplitText";
+import api from "../api";
+import { cn } from "@/lib/utils";
+import { Stethoscope } from "lucide-react"; // Import the icon
 
 function DoctorList() {
-  // State for the component
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState('');
-  const [date, setDate] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
-  const [selectedTime, setSelectedTime] = useState('');
-  const [message, setMessage] = useState('');
+  const [selectedTime, setSelectedTime] = useState("");
+  const [message, setMessage] = useState("");
 
-  // Fetch the list of doctors when the component loads
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await api.get('/api/doctors');
+        const response = await api.get("/api/doctors");
         setDoctors(response.data.doctors);
       } catch (error) {
         console.error("Failed to fetch doctors", error);
@@ -25,111 +31,154 @@ function DoctorList() {
     fetchDoctors();
   }, []);
 
-  // Fetch available slots whenever the selected doctor or date changes
   useEffect(() => {
     if (selectedDoctor && date) {
-      // Clear previous slots and message
       setSlots([]);
-      setSelectedTime('');
-      setMessage('');
-
+      setSelectedTime("");
+      setMessage("");
       const fetchSlots = async () => {
         try {
           const response = await api.get(`/api/doctors/${selectedDoctor}/available-slots?date=${date}`);
           setSlots(response.data);
         } catch (error) {
           console.error("Failed to fetch slots", error);
-          setMessage('Could not load appointment slots.');
+          setMessage("Could not load appointment slots.");
         }
       };
       fetchSlots();
     }
   }, [selectedDoctor, date]);
 
-  // Handle the final booking submission
   const handleBooking = async (e) => {
     e.preventDefault();
     if (!selectedTime) {
-      setMessage('Please select a time slot.');
+      setMessage("Please select a time slot.");
       return;
     }
     try {
-      await api.post('/api/appointments', {
+      await api.post("/api/appointments", {
         doctor_id: selectedDoctor,
         date: date,
         time: selectedTime,
       });
-      setMessage('Appointment booked successfully!');
-      // Reload the page to show the new appointment in the list below
-      setTimeout(() => window.location.reload(), 2000);
-    } catch (error) {
-      setMessage('Failed to book appointment.');
+      setMessage("Appointment booked successfully!");
+      setTimeout(() => globalThis.location.reload(), 2000);
+    } catch {
+      setMessage("Failed to book appointment.");
     }
   };
 
-  // Basic styling for slot buttons
-  const slotButtonStyle = (slot) => ({
-    backgroundColor: slot.booked ? '#ccc' : (selectedTime === slot.time ? '#007bff' : '#fff'),
-    color: slot.booked ? '#666' : (selectedTime === slot.time ? '#fff' : '#000'),
-    border: '1px solid #ccc',
-    padding: '8px 12px',
-    margin: '4px',
-    cursor: slot.booked ? 'not-allowed' : 'pointer',
-    borderRadius: '4px',
-  });
-
   return (
-    <div>
-      <h2>Book an Appointment</h2>
-      <form onSubmit={handleBooking}>
-        {/* Step 1: Select Doctor */}
-        <select value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)} required>
-          <option value="">Select a Doctor</option>
-          {doctors.map((doc) => (
-            <option key={doc.id} value={doc.id}>
-              {doc.name} - {doc.specialization}
-            </option>
-          ))}
-        </select>
-        <br /><br />
-
-        {/* Step 2: Select Date (only appears after a doctor is chosen) */}
-        {selectedDoctor && (
-          <input 
-            type="date" 
-            value={date} 
-            onChange={(e) => setDate(e.target.value)} 
-            min={new Date().toISOString().split('T')[0]} // Prevent booking past dates
-            required 
+    <Card className="shadow-lg">
+      <CardHeader>
+        <CardTitle>
+          <SplitText
+            text="Book an Appointment"
+            variant="h2"
+            className="text-2xl font-bold text-blue-600"
           />
-        )}
-        <br /><br />
-
-        {/* Step 3: Select Time Slot (only appears after a date is chosen) */}
-        {date && slots.length > 0 && (
-          <div style={{ border: '1px solid #eee', padding: '10px' }}>
-            <h4>Available Slots for {date}:</h4>
-            {slots.map((slot) => (
-              <button
-                key={slot.time}
-                type="button"
-                style={slotButtonStyle(slot)}
-                disabled={slot.booked}
-                onClick={() => setSelectedTime(slot.time)}
-              >
-                {slot.time}
-              </button>
-            ))}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleBooking} className="space-y-6">
+          {/* Step 1: Enhanced Doctor Select Dropdown */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">Select a Doctor</label>
+            <Select onValueChange={setSelectedDoctor} value={selectedDoctor}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a doctor..." />
+              </SelectTrigger>
+              <SelectContent className="bg-white/95 backdrop-blur-sm">
+                {doctors.map((doc) => (
+                  <SelectItem key={doc.id} value={doc.id.toString()}>
+                    <div className="flex items-center gap-3">
+                      <Stethoscope className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <p className="font-semibold">{doc.name}</p>
+                        <p className="text-sm text-muted-foreground">{doc.specialization}</p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        )}
-        <br />
 
-        {/* Final submission button */}
-        <button type="submit" disabled={!selectedTime}>Book Now</button>
-      </form>
-      {message && <p>{message}</p>}
-    </div>
+          {/* Step 2: Select Date using Calendar/Popover */}
+          {selectedDoctor && (
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium">Select Appointment Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+                  >
+                    {date ? date : "dd--mm--yyyy"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-white shadow-xl">
+                  <Calendar
+                    mode="single"
+                    selected={date ? new Date(date) : undefined}
+                    onSelect={(day) => {
+                      if (day) {
+                        const correctedDay = new Date(day);
+                        // This workaround corrects the date selection bug
+                        correctedDay.setDate(correctedDay.getDate() + 1);
+                        setDate(correctedDay.toISOString().split("T")[0]);
+                      } else {
+                        setDate("");
+                      }
+                    }}
+                    disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
+          {/* Step 3: Select Time Slot */}
+          {date && slots.length > 0 && (
+            <Card className="bg-gray-50 p-4">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-md">Available Slots for {date}:</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 flex flex-wrap gap-2">
+                {slots.map((slot) => (
+                  <Button
+                    key={slot.time}
+                    type="button"
+                    variant="outline"
+                    disabled={slot.booked}
+                    onClick={() => setSelectedTime(slot.time)}
+                    className={cn(
+                      "w-24",
+                      selectedTime === slot.time && "bg-blue-600 text-white hover:bg-blue-700"
+                    )}
+                  >
+                    {slot.time}
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Final submission button */}
+          <Button
+            type="submit"
+            disabled={!selectedTime}
+            className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-[1.02] shadow-md hover:shadow-lg"
+          >
+            Book Now
+          </Button>
+
+          {message && <p className="text-sm text-center pt-2">{message}</p>}
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
 export default DoctorList;
+

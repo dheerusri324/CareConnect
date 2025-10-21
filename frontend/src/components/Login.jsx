@@ -1,7 +1,7 @@
 // frontend/src/components/Login.jsx
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import api from '../api';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,6 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
