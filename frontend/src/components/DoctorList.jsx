@@ -1,6 +1,6 @@
 // frontend/src/components/DoctorList.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import SplitText from "@/components/ui/SplitText";
 import api from "../api";
 import { cn } from "@/lib/utils";
-import { Stethoscope } from "lucide-react"; // Import the icon
+import { Stethoscope } from "lucide-react";
 
 function DoctorList() {
   const [doctors, setDoctors] = useState([]);
@@ -19,35 +19,37 @@ function DoctorList() {
   const [selectedTime, setSelectedTime] = useState("");
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
+  const fetchDoctors = async () => {
+    try {
+      const response = await api.get("/api/doctors");
+      setDoctors(response.data.doctors);
+    } catch (error) {
+      console.error("Failed to fetch doctors", error);
+    }
+  };
+
+  const fetchSlots = useCallback(async () => {
+    if (selectedDoctor && date) {
       try {
-        const response = await api.get("/api/doctors");
-        setDoctors(response.data.doctors);
+        const response = await api.get(`/api/doctors/${selectedDoctor}/available-slots?date=${date}`);
+        setSlots(response.data);
       } catch (error) {
-        console.error("Failed to fetch doctors", error);
+        console.error("Failed to fetch slots", error);
+        setMessage("Could not load appointment slots.");
       }
-    };
+    }
+  }, [selectedDoctor, date]);
+
+  useEffect(() => {
     fetchDoctors();
   }, []);
 
   useEffect(() => {
-    if (selectedDoctor && date) {
-      setSlots([]);
-      setSelectedTime("");
-      setMessage("");
-      const fetchSlots = async () => {
-        try {
-          const response = await api.get(`/api/doctors/${selectedDoctor}/available-slots?date=${date}`);
-          setSlots(response.data);
-        } catch (error) {
-          console.error("Failed to fetch slots", error);
-          setMessage("Could not load appointment slots.");
-        }
-      };
-      fetchSlots();
-    }
-  }, [selectedDoctor, date]);
+    setSlots([]);
+    setSelectedTime("");
+    setMessage("");
+    fetchSlots();
+  }, [selectedDoctor, date, fetchSlots]);
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -63,8 +65,14 @@ function DoctorList() {
       });
       setMessage("Appointment booked successfully!");
       setTimeout(() => globalThis.location.reload(), 2000);
-    } catch {
-      setMessage("Failed to book appointment.");
+    } catch (err) {
+      if (err.response && err.response.status === 409) {
+        setMessage(err.response.data.message);
+        setSelectedTime("");
+        fetchSlots();
+      } else {
+        setMessage("Failed to book appointment.");
+      }
     }
   };
 
@@ -81,7 +89,6 @@ function DoctorList() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBooking} className="space-y-6">
-          {/* Step 1: Enhanced Doctor Select Dropdown */}
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium">Select a Doctor</label>
             <Select onValueChange={setSelectedDoctor} value={selectedDoctor}>
@@ -104,7 +111,6 @@ function DoctorList() {
             </Select>
           </div>
 
-          {/* Step 2: Select Date using Calendar/Popover */}
           {selectedDoctor && (
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium">Select Appointment Date</label>
@@ -124,7 +130,6 @@ function DoctorList() {
                     onSelect={(day) => {
                       if (day) {
                         const correctedDay = new Date(day);
-                        // This workaround corrects the date selection bug
                         correctedDay.setDate(correctedDay.getDate() + 1);
                         setDate(correctedDay.toISOString().split("T")[0]);
                       } else {
@@ -138,7 +143,6 @@ function DoctorList() {
             </div>
           )}
 
-          {/* Step 3: Select Time Slot */}
           {date && slots.length > 0 && (
             <Card className="bg-gray-50 p-4">
               <CardHeader className="p-0 mb-4">
@@ -164,11 +168,12 @@ function DoctorList() {
             </Card>
           )}
 
-          {/* Final submission button */}
+          {/* === UPDATED BOOK NOW BUTTON === */}
           <Button
             type="submit"
             disabled={!selectedTime}
-            className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-[1.02] shadow-md hover:shadow-lg"
+            variant="outline"
+            className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
           >
             Book Now
           </Button>
@@ -181,4 +186,3 @@ function DoctorList() {
 }
 
 export default DoctorList;
-

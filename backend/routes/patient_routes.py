@@ -33,21 +33,17 @@ def book_appointment(current_user):
     appointment_date = data.get('date')
     appointment_time = data.get('time')
 
-    # --- ATOMIC CHECK LOGIC ---
-    # Before we do anything, check if this exact slot has been booked.
+    # Atomic check to prevent double-booking
     existing_appointment = Appointment.query.filter_by(
         doctor_id=doctor_id,
         appointment_date=appointment_date,
         appointment_time=appointment_time
     ).first()
 
-    # If an appointment is found, it means someone else just booked it.
     if existing_appointment:
-        # Return a 409 Conflict status code.
-        return jsonify({'message': 'This time slot was just booked by someone else. Please select another time.'}), 409
-    # --- END OF ATOMIC CHECK ---
+        return jsonify({'message': 'This time slot was just booked. Please select another time.'}), 409
 
-    # If the slot is free, proceed with booking.
+    # If the slot is free, proceed with booking
     new_appointment = Appointment(
         patient_id=current_user.id,
         doctor_id=doctor_id,
@@ -62,7 +58,6 @@ def book_appointment(current_user):
 @patient_bp.route('/my-appointments', methods=['GET'])
 @token_required
 def get_my_appointments(current_user):
-    # Fetch all appointments and sort them, with the newest first
     appointments = Appointment.query.filter_by(patient_id=current_user.id)\
         .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())\
         .all()
@@ -130,4 +125,3 @@ def get_available_slots(current_user, doctor_id):
         current_slot_time += slot_duration
 
     return jsonify(all_slots)
-
