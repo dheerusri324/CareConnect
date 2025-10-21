@@ -21,6 +21,7 @@ def get_doctors(current_user):
         output.append(doctor_data)
     return jsonify({'doctors': output})
 
+
 @patient_bp.route('/appointments', methods=['POST'])
 @token_required
 def book_appointment(current_user):
@@ -29,9 +30,24 @@ def book_appointment(current_user):
 
     data = request.get_json()
     doctor_id = data.get('doctor_id')
-    appointment_date = data.get('date') # Expects 'YYYY-MM-DD'
+    appointment_date = data.get('date')
     appointment_time = data.get('time')
 
+    # --- ATOMIC CHECK LOGIC ---
+    # Before we do anything, check if this exact slot has been booked.
+    existing_appointment = Appointment.query.filter_by(
+        doctor_id=doctor_id,
+        appointment_date=appointment_date,
+        appointment_time=appointment_time
+    ).first()
+
+    # If an appointment is found, it means someone else just booked it.
+    if existing_appointment:
+        # Return a 409 Conflict status code.
+        return jsonify({'message': 'This time slot was just booked by someone else. Please select another time.'}), 409
+    # --- END OF ATOMIC CHECK ---
+
+    # If the slot is free, proceed with booking.
     new_appointment = Appointment(
         patient_id=current_user.id,
         doctor_id=doctor_id,
@@ -42,22 +58,38 @@ def book_appointment(current_user):
     db.session.commit()
     return jsonify({'message': 'Appointment booked successfully'}), 201
 
+
 @patient_bp.route('/my-appointments', methods=['GET'])
 @token_required
 def get_my_appointments(current_user):
-    appointments = Appointment.query.filter_by(patient_id=current_user.id).all()
+    # Fetch all appointments and sort them, with the newest first
+    appointments = Appointment.query.filter_by(patient_id=current_user.id)\
+        .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())\
+        .all()
+    
+    now = datetime.now()
     output = []
+
     for appt in appointments:
+        appointment_datetime_str = f"{appt.appointment_date.strftime('%Y-%m-%d')} {appt.appointment_time}"
+        appointment_datetime = datetime.strptime(appointment_datetime_str, '%Y-%m-%d %H:%M')
+
+        current_status = appt.status
+        if appointment_datetime < now:
+            current_status = "Completed"
+
         appt_data = {
             'id': appt.id,
             'doctor_name': appt.doctor.name,
             'specialization': appt.doctor.specialization,
             'date': appt.appointment_date.strftime('%Y-%m-%d'),
             'time': appt.appointment_time,
-            'status': appt.status
+            'status': current_status
         }
         output.append(appt_data)
+        
     return jsonify({'appointments': output})
+
 
 @patient_bp.route('/doctors/<int:doctor_id>/available-slots', methods=['GET'])
 @token_required
@@ -85,13 +117,10 @@ def get_available_slots(current_user, doctor_id):
     current_slot_time = datetime.combine(selected_date, start_time)
     end_datetime = datetime.combine(selected_date, end_time)
     
-    # Get the current time to compare against
     now = datetime.now()
 
     while current_slot_time < end_datetime:
         time_str = current_slot_time.strftime("%H:%M")
-        
-        # A slot is considered "booked" if it's already in the DB OR if the date is today and the time is in the past.
         is_past = selected_date == now.date() and current_slot_time.time() < now.time()
         
         all_slots.append({
@@ -101,3 +130,4 @@ def get_available_slots(current_user, doctor_id):
         current_slot_time += slot_duration
 
     return jsonify(all_slots)
+

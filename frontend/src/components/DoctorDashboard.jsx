@@ -1,7 +1,11 @@
-// frontend/src/components/DoctorDashboard.js
+// frontend/src/components/DoctorDashboard.jsx
 
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import SplitText from '@/components/ui/SplitText';
 
 function DoctorDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -20,35 +24,48 @@ function DoctorDashboard() {
   }, []);
 
   return (
-    <div>
-      <h2>Doctor Dashboard</h2>
-      <h3>Welcome, {username}!</h3>
-      <h4>Your Scheduled Appointments:</h4>
-      {appointments.length > 0 ? (
-        <table border="1" cellPadding="10" cellSpacing="0">
-          <thead>
-            <tr>
-              <th>Patient Name</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appt) => (
-              <tr key={appt.id}>
-                <td>{appt.patient_name}</td>
-                <td>{appt.date}</td>
-                <td>{appt.time}</td>
-                <td>{appt.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>You have no upcoming appointments.</p>
-      )}
-    </div>
+    <Card className="shadow-lg w-full">
+      <CardHeader>
+        <CardTitle>
+            <SplitText
+                text={`Dr. ${username}'s Dashboard`}
+                variant="h1"
+                className="text-3xl font-bold text-blue-600"
+            />
+        </CardTitle>
+        <CardDescription>Here are your upcoming appointments.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {appointments.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-semibold">Patient Name</TableHead>
+                <TableHead className="font-semibold">Date</TableHead>
+                <TableHead className="font-semibold">Time</TableHead>
+                <TableHead className="font-semibold text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {appointments.map((appt) => (
+                <TableRow key={appt.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="font-medium">{appt.patient_name}</TableCell>
+                  <TableCell>{appt.date}</TableCell>
+                  <TableCell>{appt.time}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                        {appt.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <p className="text-center text-gray-500 py-8">You have no upcoming appointments.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
