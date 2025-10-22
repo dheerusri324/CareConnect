@@ -3,11 +3,10 @@ import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
+  // THIS IS THE CORRECTED CONTENT SECTION
   content: [
-    './pages/**/*.{js,jsx}',
-    './components/**/*.{js,jsx}',
-    './app/**/*.{js,jsx}',
-    './src/**/*.{js,jsx}',
+    "./index.html",
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -28,7 +27,10 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // ADD THIS NEW SPARKLE KEYFRAME
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
         sparkle: {
           '0%': { transform: 'scale(0) rotate(0deg)', opacity: '0.5' },
           '50%': { transform: 'scale(1.5)', opacity: '1' },
@@ -38,10 +40,10 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        // ADD THIS NEW SPARKLE ANIMATION
+        "fade-in-up": "fade-in-up 0.5s ease-out",
         sparkle: "sparkle 0.8s ease-out forwards",
       },
     },
   },
   plugins: [tailwindcssAnimate],
-}
+};

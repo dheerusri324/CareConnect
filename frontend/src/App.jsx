@@ -10,12 +10,12 @@ import DoctorList from './components/DoctorList.jsx';
 import MyAppointments from './components/MyAppointments.jsx';
 import DoctorDashboard from './components/DoctorDashboard.jsx';
 import { Button } from "@/components/ui/button";
+import ClickSpark from '@/components/ui/ClickSpark'; // For sparkles
+import { Toaster } from "sonner";                   // For toasts
 
-// --- NEW DASHBOARD COMPONENT ---
 // This component decides which view to show based on the user's role.
 function Dashboard({ userRole }) {
   if (userRole === 'patient') {
-    // Return the Patient Dashboard Layout
     return (
       <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -27,8 +27,6 @@ function Dashboard({ userRole }) {
       </div>
     );
   } else {
-    // Assume any other role is a Doctor
-    // Return the Doctor Dashboard Layout
     return (
       <div className="p-8">
         <DoctorDashboard />
@@ -36,8 +34,6 @@ function Dashboard({ userRole }) {
     );
   }
 }
-// --- END OF NEW COMPONENT ---
-
 
 function App() {
   const token = localStorage.getItem('token');
@@ -53,46 +49,50 @@ function App() {
 
   return (
     <Router>
-      {token && (
-        <nav className="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
-          <a href="/dashboard" className="text-2xl font-bold text-blue-600">
-            CareConnect
-          </a>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-700 font-medium">
-              Welcome, {username}!
-            </span>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="text-red-500 border-red-500 hover:bg-red-600 hover:text-white transition-colors"
-             >
-              Logout
-            </Button>
-          </div>
-        </nav>
-      )}
+      {/* Sparkle wrapper is the outermost component to capture all clicks */}
+      <ClickSpark sparkColor="#2563eb">
+        <div className="min-h-screen bg-gray-50">
+          {token && (
+            <nav className="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
+              <a href="/dashboard" className="text-2xl font-bold text-blue-600">
+                CareConnect
+              </a>
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-700 font-medium">
+                  Welcome, {username}!
+                </span>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  className="text-red-500 border-red-500 hover:bg-red-600 hover:text-white transition-colors"
+                 >
+                  Logout
+                </Button>
+              </div>
+            </nav>
+          )}
 
-      <main>
-        <Routes>
-          <Route path="/" element={!token ? <Homepage /> : <Navigate to="/dashboard" />} />
-          <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
-          <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
-          <Route path="/register-doctor" element={!token ? <DoctorRegister /> : <Navigate to="/dashboard" />} />
+          <main>
+            <Routes>
+              <Route path="/" element={!token ? <Homepage /> : <Navigate to="/dashboard" />} />
+              <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
+              <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
+              <Route path="/register-doctor" element={!token ? <DoctorRegister /> : <Navigate to="/dashboard" />} />
+              <Route
+                path="/dashboard"
+                element={
+                  token ? <Dashboard userRole={role} /> : <Navigate to="/login" />
+                }
+              />
+            </Routes>
+          </main>
 
-          {/* === UPDATED DASHBOARD ROUTE === */}
-          {/* Uses the new Dashboard component */}
-          <Route
-            path="/dashboard"
-            element={
-              token ? <Dashboard userRole={role} /> : <Navigate to="/login" />
-            }
-          />
-        </Routes>
-      </main>
+          {/* Toaster sits inside the main layout to display notifications */}
+          <Toaster richColors position="top-center" />
+        </div>
+      </ClickSpark>
     </Router>
   );
 }
 
 export default App;
-

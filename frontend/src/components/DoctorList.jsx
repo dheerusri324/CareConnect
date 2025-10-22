@@ -10,6 +10,7 @@ import SplitText from "@/components/ui/SplitText";
 import api from "../api";
 import { cn } from "@/lib/utils";
 import { Stethoscope } from "lucide-react";
+import { toast } from "sonner"; // Import the toast function
 
 function DoctorList() {
   const [doctors, setDoctors] = useState([]);
@@ -17,7 +18,7 @@ function DoctorList() {
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [selectedTime, setSelectedTime] = useState("");
-  const [message, setMessage] = useState("");
+  // The 'message' state is no longer needed
 
   const fetchDoctors = async () => {
     try {
@@ -35,7 +36,7 @@ function DoctorList() {
         setSlots(response.data);
       } catch (error) {
         console.error("Failed to fetch slots", error);
-        setMessage("Could not load appointment slots.");
+        toast.error("Could not load appointment slots.");
       }
     }
   }, [selectedDoctor, date]);
@@ -47,14 +48,13 @@ function DoctorList() {
   useEffect(() => {
     setSlots([]);
     setSelectedTime("");
-    setMessage("");
     fetchSlots();
   }, [selectedDoctor, date, fetchSlots]);
 
   const handleBooking = async (e) => {
     e.preventDefault();
     if (!selectedTime) {
-      setMessage("Please select a time slot.");
+      toast.warning("Please select a time slot.");
       return;
     }
     try {
@@ -63,15 +63,15 @@ function DoctorList() {
         date: date,
         time: selectedTime,
       });
-      setMessage("Appointment booked successfully!");
+      toast.success("Appointment booked successfully!");
       setTimeout(() => globalThis.location.reload(), 2000);
     } catch (err) {
       if (err.response && err.response.status === 409) {
-        setMessage(err.response.data.message);
+        toast.error(err.response.data.message);
         setSelectedTime("");
         fetchSlots();
       } else {
-        setMessage("Failed to book appointment.");
+        toast.error("Failed to book appointment.");
       }
     }
   };
@@ -168,7 +168,6 @@ function DoctorList() {
             </Card>
           )}
 
-          {/* === UPDATED BOOK NOW BUTTON === */}
           <Button
             type="submit"
             disabled={!selectedTime}
@@ -178,7 +177,7 @@ function DoctorList() {
             Book Now
           </Button>
 
-          {message && <p className="text-sm text-center pt-2">{message}</p>}
+          {/* The old message <p> tag is no longer needed */}
         </form>
       </CardContent>
     </Card>
