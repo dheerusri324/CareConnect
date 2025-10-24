@@ -8,6 +8,7 @@ from models import db, User, Doctor
 from routes.auth_routes import auth_bp
 from routes.patient_routes import patient_bp
 from routes.doctor_routes import doctor_bp
+from routes.review_routes import review_bp # <-- IMPORT THE NEW BLUEPRINT
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -21,6 +22,7 @@ CORS(app) # Enable Cross-Origin Resource Sharing
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(patient_bp, url_prefix='/api')
 app.register_blueprint(doctor_bp, url_prefix='/api/doctor')
+app.register_blueprint(review_bp, url_prefix='/api')
 
 # Simple command to add dummy doctors
 @app.cli.command("seed_doctors")

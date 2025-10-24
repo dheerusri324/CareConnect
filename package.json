@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev --prefix frontend\" \"cross-env FLASK_APP=backend/app.py .venv\\Scripts\\flask run\""
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
    },
   "repository": {
     "type": "git",

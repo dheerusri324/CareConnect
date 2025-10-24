@@ -68,6 +68,9 @@ def get_my_appointments(current_user):
     for appt in appointments:
         appointment_datetime_str = f"{appt.appointment_date.strftime('%Y-%m-%d')} {appt.appointment_time}"
         appointment_datetime = datetime.strptime(appointment_datetime_str, '%Y-%m-%d %H:%M')
+        
+        # Check if a review exists for this appointment
+        has_review = True if appt.review else False
 
         current_status = appt.status
         if appointment_datetime < now:
@@ -79,7 +82,8 @@ def get_my_appointments(current_user):
             'specialization': appt.doctor.specialization,
             'date': appt.appointment_date.strftime('%Y-%m-%d'),
             'time': appt.appointment_time,
-            'status': current_status
+            'status': current_status,
+            'has_review': has_review  # <-- ADD THIS FLAG
         }
         output.append(appt_data)
         

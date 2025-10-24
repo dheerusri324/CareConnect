@@ -1,5 +1,8 @@
 # backend/routes/doctor_routes.py
-
+# Add these imports at the top
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
 from flask import Blueprint, jsonify
 from models import db, Appointment, Doctor
 from .auth_routes import token_required
@@ -49,3 +52,32 @@ def get_doctor_appointments(current_user):
         }
         output.append(appt_data)
     return jsonify({'appointments': output})
+
+@doctor_bp.route('/profile-pic', methods=['POST'])
+@token_required
+def upload_profile_pic(current_user):
+    if current_user.role != 'doctor':
+        return jsonify({'message': 'Access forbidden'}), 403
+
+    if 'profile_pic' not in request.files:
+        return jsonify({'message': 'No file part'}), 400
+
+    file = request.files['profile_pic']
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+
+    if file:
+        filename = secure_filename(file.filename)
+        # Create a unique filename to prevent conflicts
+        unique_filename = f"{current_user.id}_{filename}"
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+        file.save(os.path.join(upload_folder, unique_filename))
+
+        # Update the doctor's profile in the database
+        doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+        doctor.profile_pic = unique_filename
+        db.session.commit()
+
+        return jsonify({'message': 'Profile picture updated successfully', 'filename': unique_filename}), 200
+
+    return jsonify({'message': 'File upload failed'}), 500
