@@ -3,16 +3,18 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Star } from "lucide-react";
 
-// The base URL for your backend server
 const API_URL = "http://127.0.0.1:5000";
 
-const DoctorCard = ({ doctor }) => {
+const DoctorCard = ({ doctor, onClick }) => { // Accept onClick as a prop
   const rating = doctor.average_rating ? doctor.average_rating.toFixed(1) : "No reviews";
-  // Construct the full image URL
   const imageUrl = `${API_URL}/static/uploads/${doctor.profile_pic}`;
 
   return (
-    <Card className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    // Add onClick handler and cursor-pointer class to the Card
+    <Card 
+      className="transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-center gap-4">
         <img
           src={imageUrl}

@@ -166,5 +166,54 @@ router.post('/appointments', tokenRequired, async (req, res) => {
     }
 });
 
+// GET /api/doctors/:id
+router.get('/doctors/:id', tokenRequired, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const doctor = await prisma.doctor.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                reviews: {
+                    include: {
+                        author: {
+                            select: { username: true } // Include author's username
+                        }
+                    },
+                    orderBy: { created_at: 'desc' } // Order reviews by newest first
+                }
+            }
+        });
+
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor not found' });
+        }
+
+        const reviewCount = doctor.reviews.length;
+        const averageRating = reviewCount > 0
+            ? doctor.reviews.reduce((acc, review) => acc + review.rating, 0) / reviewCount
+            : 0;
+
+        res.json({
+            id: doctor.id,
+            name: doctor.name,
+            specialization: doctor.specialization,
+            profile_pic: doctor.profile_pic,
+            average_rating: averageRating,
+            review_count: reviewCount,
+            reviews: doctor.reviews.map(review => ({
+                id: review.id,
+                rating: review.rating,
+                comment: review.comment,
+                created_at: review.created_at,
+                patient_username: review.author.username
+            }))
+        });
+
+    } catch (error) {
+        console.error("Error fetching single doctor profile:", error);
+        res.status(500).json({ message: "Failed to fetch doctor profile" });
+    }
+});
+
 
 export default router;
