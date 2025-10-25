@@ -24,6 +24,7 @@
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
     "lucide-react": "^0.546.0",
+    "luxon": "^3.7.2",
     "motion": "^12.23.24",
     "react": "^19.1.1",
     "react-day-picker": "^9.11.1",

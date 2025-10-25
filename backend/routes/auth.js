@@ -9,7 +9,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 const router = express.Router();
 
-const SECRET_KEY = process.env.SECRET_KEY || 'your-default-secret-key'; // Ensure SECRET_KEY is in your .env
+const SECRET_KEY = process.env.SECRET_KEY || 'your-default-secret-key';
 
 // --- Patient Registration ---
 router.post('/register', async (req, res) => {
@@ -20,7 +20,6 @@ router.post('/register', async (req, res) => {
     }
 
     try {
-        // Check if user already exists
         const existingUser = await prisma.user.findUnique({
             where: { username },
         });
@@ -28,15 +27,13 @@ router.post('/register', async (req, res) => {
             return res.status(409).json({ message: 'Username already exists' });
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10); // 10 is salt rounds
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create new user (default role is 'patient')
         const newUser = await prisma.user.create({
             data: {
                 username,
                 password_hash: hashedPassword,
-                role: 'patient', // Explicitly set role
+                role: 'patient',
             },
         });
 
@@ -58,21 +55,34 @@ router.post('/login', async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { username },
+            // Include the doctor profile if it exists
+            include: { doctorProfile: true }
         });
 
-        // Check if user exists and password is correct
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
-            { id: user.id, role: user.role }, // Payload
-            SECRET_KEY,                       // Secret Key
-            { expiresIn: '24h' }              // Token expiry time
+            { id: user.id, role: user.role },
+            SECRET_KEY,
+            { expiresIn: '24h' }
         );
 
-        res.json({ token, role: user.role, username: user.username });
+        // --- Prepare the response data ---
+        const responseData = {
+            token,
+            role: user.role,
+            username: user.username
+        };
+
+        // If the user is a doctor, add their actual name to the response
+        if (user.role === 'doctor' && user.doctorProfile) {
+            responseData.name = user.doctorProfile.name; // Add the doctor's name
+        }
+        // --- End of response data preparation ---
+
+        res.json(responseData); // Send the combined data
 
     } catch (error) {
         console.error("Login error:", error);
@@ -81,4 +91,5 @@ router.post('/login', async (req, res) => {
 });
 
 
-export default router; // Export the router
+export default router;
+

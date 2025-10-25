@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Settings } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import { Badge } from "@/components/ui/badge";
-import SplitText from '@/components/ui/SplitText';
+import SplitText from '@/components/ui/SplitText'; // Ensure this component exists and works
 
 function DoctorDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const username = localStorage.getItem('username');
+  // Read the doctor's NAME from localStorage, fallback to username if name isn't found
+  const doctorName = localStorage.getItem('name') || localStorage.getItem('username');
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -34,15 +35,15 @@ function DoctorDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle>
+                {/* Use the doctorName variable here */}
                 <SplitText
-                  text={`Dr. ${username}'s Dashboard`}
+                  text={`${doctorName}'s Dashboard`}
                   variant="h1"
                   className="text-3xl font-bold text-blue-600"
                 />
               </CardTitle>
               <CardDescription>Here are your upcoming appointments.</CardDescription>
             </div>
-            {/* This button opens the settings modal */}
             <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(true)}>
               <Settings className="h-5 w-5 text-gray-500 hover:text-blue-600 transition-colors" />
             </Button>
@@ -80,7 +81,6 @@ function DoctorDashboard() {
         </CardContent>
       </Card>
 
-      {/* This renders the modal when isModalOpen is true */}
       <SettingsModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </>
   );

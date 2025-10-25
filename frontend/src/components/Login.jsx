@@ -17,10 +17,19 @@ function Login() {
     setError('');
     try {
       const response = await api.post('/auth/login', { username, password });
+      // Store token, role, and username as before
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('username', response.data.username);
-      globalThis.location.href = '/dashboard';
+
+      // --- ADD THIS LINE ---
+      // If the response includes a name (meaning it's a doctor), store it too
+      if (response.data.name) {
+        localStorage.setItem('name', response.data.name);
+      }
+      // --- END OF ADDITION ---
+
+      globalThis.location.href = '/dashboard'; // Redirect
     } catch {
       setError('Invalid credentials. Please try again.');
     }

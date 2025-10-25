@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ReviewModal from './ReviewModal';
 import { CalendarDays } from 'lucide-react';
+import { toast } from 'sonner'; // Import toast
 import { cn } from "@/lib/utils";
 
 function MyAppointments() {
@@ -33,6 +34,21 @@ function MyAppointments() {
     setSelectedAppointment(appointment);
     setIsModalOpen(true);
   };
+
+  const handleCancel = async (appointmentId) => {
+        // Optional: Add a confirmation dialog
+        // if (!confirm("Are you sure you want to cancel this appointment?")) {
+        //   return;
+        // }
+        try {
+            await api.delete(`/api/appointments/${appointmentId}`);
+            toast.success("Appointment cancelled successfully.");
+            // Refresh the list after cancellation
+            fetchAppointments();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Could not cancel appointment.");
+        }
+    };
 
   return (
     <>
